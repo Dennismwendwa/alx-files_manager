@@ -14,11 +14,13 @@ class DBClient {
     this.connect();
   }
 
-  async connect() {
+    async connect() {
     try {
       await this.client.connect();
+      console.log('Connected to MongoDB');
     } catch (error) {
       console.error(`Error connecting to MongoDB: ${error}`);
+      throw error;
     }
   }
 

@@ -6,8 +6,6 @@ import dbClient from '../utils/db';
 class AuthController {
   static async getConnect (req, res) {
     const authHeader = req.headers.authorization;
-    console.log(req.headers);
-    console.log(authHeader);
     if (!authHeader || !authHeader.startsWith('Basic ')) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
