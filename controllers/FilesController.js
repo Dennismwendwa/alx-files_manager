@@ -53,9 +53,10 @@ class FilesController {
       return res.status(201).json({ ...fileDocument, id: result.insertedId });
     }
 
-    const folderPath = process.env.FOLDER_PATH || '/tmp/files_manager';
+    const folderPath = process.env.FOLDER_PATH || '/tmp/files_mmanager';
     if (!fs.existsSync(folderPath)) {
       fs.mkdirSync(folderPath, { recursive: true });
+      console.log('created file');
     }
     const filePath = path.join(folderPath, `${uuidv4()}`);
 
@@ -67,6 +68,49 @@ class FilesController {
     });
 
     return res.status(201).json({ ...fileDocument, id: result.insertedId });
+  }
+
+  static async getShow(req, res) {
+    const userToken = req.headers['x-token'];
+    const userId = await redisClient.get(`auth_${userToken}`);
+
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const fileId = req.params.id;
+    const file = await dbClient.client.db().collection('files').findOne({
+      _id: dbClient.getObjectId(fileId),
+      userId,
+    });
+
+    if (!file) {
+      return res.status(404).json({ error: 'Not found' });
+    }
+
+    return res.json(file);
+  }
+
+  static async getIndex(req, res) {
+    const userToken = req.headers['x-token'];
+    const userId = await redisClient.get(`auth_${userToken}`);
+
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const { parentId = '0', page = 0 } = req.query;
+
+    const pageSize = 20;
+    const skip = page * pageSize;
+
+    const files = await dbClient.client.db().collection('files')
+      .find({ userId, parentId })
+      .skip(skip)
+      .limit(pageSize)
+      .toArray();
+
+    return res.json(files);
   }
 }
 
